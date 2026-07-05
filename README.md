@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Skill Manager
+
+Visualize, edit, and manage AI coding tool skills across multiple platforms.
+
+## Features
+
+- **Multi-tool support** — Manage skills from Claude Code, Codex, Gemini, Cursor, and Aider in one place
+- **Server-side pagination** — Browse 100+ skills efficiently (10/20/50 per page)
+- **Source filtering** — Filter by AI tool (Claude, Codex, Gemini, Cursor, Aider)
+- **Full-text search** — Search by name, description, content, or tool bindings
+- **Grid & list views** — Toggle between card grid and expandable list
+- **Import/Export** — Import from ZIP files or selectively import across tools; export individual skills as ZIP
+- **CRUD operations** — Create, edit, and delete skills with YAML frontmatter parsing
+
+## Tech Stack
+
+- [Next.js 16](https://nextjs.org) — React framework with App Router
+- [Tailwind CSS v4](https://tailwindcss.com) — Utility-first CSS
+- [Vitest](https://vitest.dev) — Unit and integration testing
+- [React 19](https://react.dev) — UI library
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3456](http://localhost:3456) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+lib/
+  skills.ts       — Multi-source skill scanning & pagination
+  parser.ts       — YAML frontmatter parser for SKILL.md files
+  crud.ts         — Create, update, delete skill operations
+lib/__tests__/
+  parser.test.ts  — Frontmatter parsing unit tests
+  crud.test.ts    — CRUD operation unit tests
+src/app/
+  components/     — React UI components
+    types.ts      — Shared TypeScript interfaces
+    SkillCardGrid.tsx
+    SkillList.tsx
+    SkillPagination.tsx
+    SkillToolbar.tsx
+    SkillStats.tsx
+    DetailModal.tsx
+    EditModal.tsx
+    ZipImportModal.tsx
+    SelectiveImportModal.tsx
+  api/skills/
+    route.ts      — API route handlers (GET/POST/PUT/DELETE)
+    __tests__/
+      integration.test.ts  — API integration tests
+  page.tsx        — Main page (orchestrator)
+  layout.tsx      — Root layout
+```
 
-## Learn More
+## API Endpoints
 
-To learn more about Next.js, take a look at the following resources:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/skills?page=N&pageSize=N&source=X&search=Q` | Paginated skill list |
+| GET | `/api/skills?action=stats&source=X` | Aggregate statistics |
+| GET | `/api/skills?action=export&name=X` | Export skill as ZIP |
+| POST | `/api/skills` | Create new skill |
+| POST | `/api/skills?action=import-zip` | Import from ZIP upload |
+| POST | `/api/skills?action=import-selective` | Bulk import selected skills |
+| PUT | `/api/skills` | Update existing skill |
+| DELETE | `/api/skills?name=X` | Delete skill directory |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Query Parameters
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `page` — Page number (default: 1)
+- `pageSize` — Items per page (default: 20, options: 10, 20, 50)
+- `source` — Filter by tool: `claude`, `codex`, `gemini`, `cursor`, `aider`
+- `search` — Full-text search across name, description, content, and tools
 
-## Deploy on Vercel
+## Testing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm test              # Run tests in watch mode
+npm run test:run      # Run tests once
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Skill Sources
+
+Skills are auto-discovered from these directories:
+
+| Tool | Directory |
+|------|-----------|
+| Claude Code | `~/.claude/skills` |
+| Codex | `~/.codex/skills` |
+| Gemini | `~/.gemini/antigravity/skills` |
+| Cursor | `~/.cursor/skills` |
+| Aider | `~/.aider-desk/skills` |
