@@ -34,7 +34,15 @@ export async function GET(request: Request) {
   const searchFilter = searchParams.get("search") || undefined;
 
   const result = await getPaginatedSkills(page, pageSize, sourceFilter, searchFilter);
-  return NextResponse.json(result);
+  // Sanitize content to avoid invalid JSON (control characters in skill content)
+  const sanitized = {
+    ...result,
+    skills: result.skills.map((s) => ({
+      ...s,
+      content: s.content.replace(/\r\n/g, '\n').replace(/\r/g, '\n'),
+    })),
+  };
+  return NextResponse.json(sanitized);
 }
 
 async function handleExport(name: string) {
