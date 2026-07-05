@@ -1,5 +1,6 @@
 import { readdir, stat, access, constants, readFile } from "fs/promises";
-import { join, basename } from "path";
+import { join } from "path";
+import { parseFrontmatter } from "./parser";
 
 export interface SkillSource {
   id: string;
@@ -45,74 +46,6 @@ async function readSkillFile(filePath: string): Promise<string> {
   } catch {
     return "";
   }
-}
-
-async function parseFrontmatter(content: string): Promise<{
-  name?: string;
-  description?: string;
-  allowedTools?: string[];
-  body: string;
-  bodyStart: number;
-}> {
-  const result = {
-    name: undefined as string | undefined,
-    description: undefined as string | undefined,
-    allowedTools: undefined as string[] | undefined,
-    body: "",
-    bodyStart: 0,
-  };
-
-  const lines = content.split("\n");
-  let inFM = false;
-  let fmEnd = -1;
-
-  for (let i = 0; i < Math.min(lines.length, 25); i++) {
-    const line = lines[i];
-    if (line.trimStart().startsWith("---")) {
-      if (!inFM) {
-        inFM = true;
-        continue;
-      } else {
-        fmEnd = i;
-        break;
-      }
-    }
-    if (inFM) {
-      const nm = line.match(/^name:\s*(.+)$/i);
-      if (nm) result.name = nm[1].trim();
-      const dm = line.match(/^description:\s*(.+)$/i);
-      if (dm) result.description = dm[1].trim();
-      const tm = line.match(/^allowed-tools:\s*(.+)$/i);
-      if (tm) {
-        result.allowedTools = tm[1].split(",").map((t) => t.trim()).filter(Boolean);
-      }
-      // Multi-line allowed-tools
-      if (line.match(/^allowed-tools:\s*$/) || line.match(/^allowed-tools:\s*\|/)) {
-        const tools: string[] = [];
-        for (let j = i + 1; j < Math.min(lines.length, i + 30); j++) {
-          const tl = lines[j].match(/^\s*-\s*(.+)$/);
-          if (tl) tools.push(tl[1].trim());
-          else if (lines[j].trim() === "" || lines[j].match(/^[a-z]/)) break;
-        }
-        if (tools.length) result.allowedTools = tools;
-      }
-    }
-  }
-
-  let cs = 0;
-  if (fmEnd >= 0) {
-    cs = fmEnd + 1;
-  } else {
-    for (let i = 0; i < Math.min(lines.length, 5); i++) {
-      if (lines[i].trim() === "---") {
-        cs = i + 1;
-        break;
-      }
-    }
-  }
-  result.body = lines.slice(cs).join("\n").trim();
-  result.bodyStart = cs;
-  return result;
 }
 
 async function listSkillFiles(skillPath: string): Promise<string[]> {
@@ -196,7 +129,7 @@ async function scanSingleSource(
     const content = await readSkillFile(mainMd);
     if (!content) continue;
 
-    const fm = await parseFrontmatter(content);
+    const fm = parseFrontmatter(content);
 
     const allFiles = await listSkillFiles(skillPath);
 
